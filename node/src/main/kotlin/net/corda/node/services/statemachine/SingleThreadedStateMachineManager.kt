@@ -398,7 +398,7 @@ class SingleThreadedStateMachineManager(
     }
 
     override fun markAllFlowsAsPaused(): Map<StateMachineRunId, Boolean> {
-        return checkpointStorage.getRunnableCheckpoints().use {
+        return checkpointStorage.getCheckpointsToRun().use {
             it.map { (id, _) ->
                 val paused = markFlowsAsPaused(id)
                 id to paused
@@ -498,7 +498,7 @@ class SingleThreadedStateMachineManager(
     }
 
     private fun restoreFlowsFromCheckpoints(): List<Flow> {
-        return checkpointStorage.getRunnableCheckpoints().use {
+        return checkpointStorage.getCheckpointsToRun().use {
             it.mapNotNull { (id, serializedCheckpoint) ->
                 // If a flow is added before start() then don't attempt to restore it
                 mutex.locked { if (id in flows) return@mapNotNull null }
