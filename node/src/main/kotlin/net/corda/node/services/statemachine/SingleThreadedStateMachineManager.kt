@@ -102,7 +102,6 @@ class SingleThreadedStateMachineManager(
         val changesPublisher = PublishSubject.create<StateMachineManager.Change>()!!
         /** True if we're shutting down, so don't resume anything. */
         var stopping = false
-        var stopped = false
         val flows = HashMap<StateMachineRunId, Flow>()
         val nonResidentFlows = HashMap<StateMachineRunId, FlowCreatorFromCheckpoint>()
         val startedFutures = HashMap<StateMachineRunId, OpenFuture<Unit>>()
@@ -221,7 +220,6 @@ class SingleThreadedStateMachineManager(
     override fun stop(allowedUnsuspendedFiberCount: Int) {
         require(allowedUnsuspendedFiberCount >= 0){"allowedUnsuspendedFiberCount must be greater than or equal to zero"}
         mutex.locked {
-            if (stopped) return
             if (stopping) throw IllegalStateException("Already stopping!")
             stopping = true
             for ((_, flow) in flows) {
@@ -234,9 +232,6 @@ class SingleThreadedStateMachineManager(
         fiberDeserializationChecker?.let {
             val foundUnrestorableFibers = it.stop()
             check(!foundUnrestorableFibers) { "Unrestorable checkpoints were created, please check the logs for details." }
-        }
-        mutex.locked {
-            stopped = true
         }
     }
 
@@ -306,7 +301,7 @@ class SingleThreadedStateMachineManager(
         }
     }
 
-    override fun markFlowAsPaused(id: StateMachineRunId): Boolean {
+    private fun markFlowAsPaused(id: StateMachineRunId): Boolean {
         mutex.locked {
             var success = false
             if (flowHospital.contains(id)) {
@@ -325,7 +320,7 @@ class SingleThreadedStateMachineManager(
         }
     }
 
-    override fun markAllFlowsAsPaused(): Map<StateMachineRunId, Boolean> {
+    private fun markAllFlowsAsPaused(): Map<StateMachineRunId, Boolean> {
         return checkpointStorage.getCheckpointsToRun().use {
             it.map { (id, _) ->
                 val paused = markFlowAsPaused(id)
