@@ -103,7 +103,7 @@ class SandboxSerializationSchemeBuilder(
             register(SandboxCollectionSerializer(classLoader, taskFactory, this))
             register(SandboxMapSerializer(classLoader, taskFactory, this))
             register(SandboxEnumSerializer(classLoader, taskFactory, predicateFactory, this))
-            register(SandboxPublicKeySerializer(classLoader, taskFactory))
+            register(SandboxPublicKeySerializer(classLoader, taskFactory, sandboxBasicInput))
             register(SandboxToStringSerializer(BigDecimal::class.java, classLoader, sandboxBasicInput))
             register(SandboxToStringSerializer(BigInteger::class.java, classLoader, sandboxBasicInput))
             register(SandboxToStringSerializer(StringBuffer::class.java, classLoader, sandboxBasicInput))

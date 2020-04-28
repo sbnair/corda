@@ -1,8 +1,9 @@
 package net.corda.serialization.djvm.serializers
 
+import net.corda.core.crypto.Crypto
 import net.corda.core.serialization.SerializationContext
 import net.corda.djvm.rewiring.SandboxClassLoader
-import net.corda.serialization.djvm.deserializers.PublicKeyDecoder
+import net.corda.serialization.djvm.deserializers.PublicKeyWrapper
 import net.corda.serialization.djvm.toSandboxAnyClass
 import net.corda.serialization.internal.amqp.CustomSerializer
 import net.corda.serialization.internal.amqp.DeserializationInput
@@ -16,11 +17,19 @@ import java.util.function.Function
 
 class SandboxPublicKeySerializer(
     classLoader: SandboxClassLoader,
-    taskFactory: Function<Class<out Function<*, *>>, out Function<in Any?, out Any?>>
+    taskFactory: Function<Class<out Function<*, *>>, out Function<in Any?, out Any?>>,
+    basicInput: Function<in Any?, out Any?>
 ) : CustomSerializer.Implements<Any>(classLoader.toSandboxAnyClass(PublicKey::class.java)) {
-    @Suppress("unchecked_cast")
-    private val decoder: Function<ByteArray, out Any?>
-        = taskFactory.apply(PublicKeyDecoder::class.java) as Function<ByteArray, out Any?>
+    private val decoder = Function<ByteArray, Array<out Any?>> { bits ->
+       Crypto.decodePublicKey(bits).let { key ->
+           arrayOf(
+               basicInput.apply(key.algorithm),
+               basicInput.apply(key.format),
+               bits,
+               key
+           )
+       }
+    }.andThen(taskFactory.apply(PublicKeyWrapper::class.java))
 
     override val schemaForDocumentation: Schema = Schema(emptyList())
 
