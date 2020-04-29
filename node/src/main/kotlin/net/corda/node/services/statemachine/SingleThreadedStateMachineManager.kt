@@ -161,6 +161,7 @@ class SingleThreadedStateMachineManager(
         }
         this.flowCreator = FlowCreator(
                 checkpointSerializationContext,
+                checkpointStorage,
                 scheduler,
                 database,
                 transitionExecutor,
