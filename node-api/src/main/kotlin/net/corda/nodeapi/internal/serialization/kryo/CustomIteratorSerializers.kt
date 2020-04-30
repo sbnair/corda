@@ -6,8 +6,6 @@ import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
-import java.util.LinkedHashMap
-import java.util.LinkedHashSet
 import java.util.LinkedList
 
 /**
@@ -39,43 +37,30 @@ internal object LinkedHashMapIteratorSerializer : Serializer<Iterator<*>>() {
         return when (type) {
             KEY_ITERATOR_CLASS -> {
                 val current = (kryo.readClassAndObject(input) as? Map.Entry<*, *>)?.key
-                outerMap.keys.iterator().returnToIteratorLocation(kryo, current)
+                outerMap.keys.iterator().returnToIteratorLocation(current)
             }
             VALUE_ITERATOR_CLASS -> {
                 val current = (kryo.readClassAndObject(input) as? Map.Entry<*, *>)?.value
-                outerMap.values.iterator().returnToIteratorLocation(kryo, current)
+                outerMap.values.iterator().returnToIteratorLocation(current)
             }
             MAP_ITERATOR_CLASS -> {
                 val current = (kryo.readClassAndObject(input) as? Map.Entry<*, *>)
-                outerMap.iterator().returnToIteratorLocation(kryo, current)
+                outerMap.iterator().returnToIteratorLocation(current)
             }
             else -> throw IllegalStateException("Invalid type")
         }
     }
 
-    private fun Iterator<*>.returnToIteratorLocation(kryo: Kryo, current: Any?): Iterator<*> {
+    private fun Iterator<*>.returnToIteratorLocation(current: Any?) : Iterator<*> {
         while (this.hasNext()) {
             val key = this.next()
-            if (iteratedObjectsEqual(kryo, key, current)) break
+            @Suppress("SuspiciousEqualsCombination")
+            if (current == null || key === current || key == current) {
+                break
+            }
         }
         return this
     }
-
-    private fun iteratedObjectsEqual(kryo: Kryo, a: Any?, b: Any?): Boolean = if (a == null || b == null) {
-        a == b
-    } else {
-        a === b || mapEntriesEqual(kryo, a, b) || kryoOptimisesAwayReferencesButEqual(kryo, a, b)
-    }
-
-    /**
-     * Kryo can substitute brand new created instances for some types during deserialization, making the identity check fail.
-     * Fall back to equality for those.
-     */
-    private fun kryoOptimisesAwayReferencesButEqual(kryo: Kryo, a: Any, b: Any) =
-            (!kryo.referenceResolver.useReferences(a.javaClass) && !kryo.referenceResolver.useReferences(b.javaClass) && a == b)
-
-    private fun mapEntriesEqual(kryo: Kryo, a: Any, b: Any) =
-            (a is Map.Entry<*, *> && b is Map.Entry<*, *> && iteratedObjectsEqual(kryo, a.key, b.key))
 }
 
 /**

@@ -62,7 +62,7 @@ class NonDeterministicContractVerifyTest {
                         .returnValue.getOrThrow()
             }
             assertThat(ex)
-                .hasMessageMatching("^NoSuchMethodError: .*\\Qsandbox.java.time.Instant.now()\\E.*\$")
+                .hasMessageStartingWith("NoSuchMethodError: sandbox.java.time.Instant.now()Lsandbox/java/time/Instant;, ")
         }
     }
 
@@ -75,7 +75,7 @@ class NonDeterministicContractVerifyTest {
                         .returnValue.getOrThrow()
             }
             assertThat(ex)
-                .hasMessageStartingWith("RuleViolationError: Disallowed reference to API; java.lang.System.currentTimeMillis(), ")
+                .hasMessageStartingWith("NoSuchMethodError: sandbox.java.lang.System.currentTimeMillis()J, ")
         }
     }
 
@@ -88,7 +88,7 @@ class NonDeterministicContractVerifyTest {
                         .returnValue.getOrThrow()
             }
             assertThat(ex)
-                .hasMessageStartingWith("RuleViolationError: Disallowed reference to API; java.lang.System.nanoTime(), ")
+                .hasMessageStartingWith("NoSuchMethodError: sandbox.java.lang.System.nanoTime()J, ")
         }
     }
 
@@ -101,7 +101,7 @@ class NonDeterministicContractVerifyTest {
                         .returnValue.getOrThrow()
             }
             assertThat(ex)
-                .hasMessageMatching("^NoSuchMethodError: .*\\Qsandbox.java.util.UUID.randomUUID()\\E.*\$")
+                .hasMessageStartingWith("NoSuchMethodError: sandbox.java.util.UUID.randomUUID()Lsandbox/java/util/UUID;, ")
         }
     }
 

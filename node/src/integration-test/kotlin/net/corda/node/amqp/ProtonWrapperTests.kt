@@ -386,16 +386,13 @@ class ProtonWrapperTests {
 	fun `Message sent from AMQP to non-existent Artemis inbox is rejected and client disconnects`() {
         val (server, artemisClient) = createArtemisServerAndClient()
         val amqpClient = createClient()
-        // AmqpClient is set to auto-reconnect, there might be multiple connect/disconnect rounds
-        val connectedStack = mutableListOf<Boolean>()
+        var connected = false
         amqpClient.onConnection.subscribe { change ->
-            connectedStack.add(change.connected)
+            connected = change.connected
         }
         val clientConnected = amqpClient.onConnection.toFuture()
         amqpClient.start()
         assertEquals(true, clientConnected.get().connected)
-        assertEquals(1, connectedStack.size)
-        assertTrue(connectedStack.contains(true))
         assertEquals(CHARLIE_NAME, CordaX500Name.build(clientConnected.get().remoteCert!!.subjectX500Principal))
         val sendAddress = P2P_PREFIX + "Test"
         val testData = "Test".toByteArray()
@@ -404,7 +401,7 @@ class ProtonWrapperTests {
         val message = amqpClient.createMessage(testData, sendAddress, CHARLIE_NAME.toString(), testProperty)
         amqpClient.write(message)
         assertEquals(MessageStatus.Rejected, message.onComplete.get())
-        assertTrue(connectedStack.contains(false))
+        assertEquals(false, connected)
         amqpClient.stop()
         artemisClient.stop()
         server.stop()
@@ -424,11 +421,10 @@ class ProtonWrapperTests {
             doReturn(NetworkHostAndPort("0.0.0.0", artemisPort)).whenever(it).p2pAddress
             doReturn(null).whenever(it).jmxMonitoringHttpPort
             doReturn(true).whenever(it).crlCheckSoftFail
-            doReturn(true).whenever(it).crlCheckArtemisServer
         }
         artemisConfig.configureWithDevSSLCertificate()
 
-        val server = ArtemisMessagingServer(artemisConfig, NetworkHostAndPort("0.0.0.0", artemisPort), maxMessageSize, null)
+        val server = ArtemisMessagingServer(artemisConfig, NetworkHostAndPort("0.0.0.0", artemisPort), maxMessageSize)
         val client = ArtemisMessagingClient(artemisConfig.p2pSslOptions, NetworkHostAndPort("localhost", artemisPort), maxMessageSize)
         server.start()
         client.start()

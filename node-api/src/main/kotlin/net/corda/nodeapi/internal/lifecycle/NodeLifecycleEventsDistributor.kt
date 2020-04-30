@@ -98,12 +98,11 @@ class NodeLifecycleEventsDistributor : Closeable {
                 orderedSnapshot.forEach {
                     log.debug("Distributing event $event to: $it")
                     val updateResult = it.update(event)
-                    when(updateResult) {
-                        is Try.Success -> log.debug("Event $event distribution outcome: $updateResult")
-                        is Try.Failure -> {
-                            log.error("Failed to distribute event $event, failure outcome: $updateResult", updateResult.exception)
-                            handlePossibleFatalTermination(event, updateResult)
-                        }
+                    if (updateResult.isSuccess) {
+                        log.debug("Event $event distribution outcome: $updateResult")
+                    } else {
+                        log.error("Failed to distribute event $event, failure outcome: $updateResult")
+                        handlePossibleFatalTermination(event, updateResult as Try.Failure<String>)
                     }
                 }
                 result.set(null)

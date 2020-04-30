@@ -38,14 +38,13 @@ class LocalTypeModelTest : TestBase(KOTLIN) {
         return classLoader.toSandboxClass(T::class.java)
     }
 
-    private inline fun <reified LOCAL: LocalTypeInformation> assertLocalType(type: Class<*>): LOCAL {
-        return assertLocalType(LOCAL::class.java, type) as LOCAL
+    private inline fun <reified LOCAL: LocalTypeInformation> assertLocalType(type: Class<*>) {
+        assertLocalType(LOCAL::class.java, type)
     }
 
-    private fun <LOCAL: LocalTypeInformation> assertLocalType(localType: Class<LOCAL>, type: Class<*>): LocalTypeInformation {
+    private fun <LOCAL: LocalTypeInformation> assertLocalType(localType: Class<LOCAL>, type: Class<*>) {
         val typeData = serializerFactory.getTypeInformation(type)
         assertThat(typeData).isInstanceOf(localType)
-        return typeData
     }
 
     @Test
@@ -176,14 +175,6 @@ class LocalTypeModelTest : TestBase(KOTLIN) {
     }
 
     @Test
-    fun testCustomEnum() = sandbox {
-        _contextSerializationEnv.set(createSandboxSerializationEnv(classLoader))
-        val anEnum = assertLocalType<AnEnum>(sandbox<CustomEnum>(classLoader))
-        assertThat(anEnum.members)
-            .containsExactlyElementsOf(CustomEnum::class.java.enumConstants.map(CustomEnum::name))
-    }
-
-    @Test
     fun testEnumSet() = sandbox {
         _contextSerializationEnv.set(createSandboxSerializationEnv(classLoader))
         assertLocalType<Abstract>(sandbox<EnumSet<*>>(classLoader))
@@ -196,15 +187,5 @@ class LocalTypeModelTest : TestBase(KOTLIN) {
     fun testMap() = sandbox {
         _contextSerializationEnv.set(createSandboxSerializationEnv(classLoader))
         assertLocalType<AMap>(sandbox<Map<*,*>>(classLoader))
-    }
-
-    @Suppress("unused")
-    enum class CustomEnum {
-        ONE,
-        TWO;
-
-        override fun toString(): String {
-            return "[${name.toLowerCase()}]"
-        }
     }
 }

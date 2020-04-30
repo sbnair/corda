@@ -23,7 +23,6 @@ import net.corda.core.utilities.seconds
 import net.corda.node.services.FinalityHandler
 import org.hibernate.exception.ConstraintViolationException
 import rx.subjects.PublishSubject
-import java.io.Closeable
 import java.sql.SQLException
 import java.sql.SQLTransientConnectionException
 import java.time.Clock
@@ -40,7 +39,7 @@ import kotlin.math.pow
  */
 class StaffedFlowHospital(private val flowMessaging: FlowMessaging,
                           private val clock: Clock,
-                          private val ourSenderUUID: String) : Closeable {
+                          private val ourSenderUUID: String) {
     companion object {
         private val log = contextLogger()
         private val staff = listOf(
@@ -306,10 +305,6 @@ class StaffedFlowHospital(private val flowMessaging: FlowMessaging,
     }
 
     operator fun contains(flowId: StateMachineRunId) = mutex.locked { flowId in flowPatients }
-
-    override fun close() {
-        hospitalJobTimer.cancel()
-    }
 
     class FlowMedicalHistory {
         internal val records: MutableList<MedicalRecord.Flow> = mutableListOf()

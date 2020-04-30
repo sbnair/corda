@@ -323,13 +323,7 @@ object AttachmentsClassLoaderBuilder {
         val serializationContext = cache.computeIfAbsent(Key(attachmentIds, params)) {
             // Create classloader and load serializers, whitelisted classes
             val transactionClassLoader = AttachmentsClassLoader(attachments, params, txId, isAttachmentTrusted, parent)
-            val serializers = try {
-                createInstancesOfClassesImplementing(transactionClassLoader, SerializationCustomSerializer::class.java,
-                        JDK1_2_CLASS_FILE_FORMAT_MAJOR_VERSION..JDK8_CLASS_FILE_FORMAT_MAJOR_VERSION)
-                }
-                catch(ex: UnsupportedClassVersionError) {
-                    throw TransactionVerificationException.UnsupportedClassVersionError(txId, ex.message!!, ex)
-                }
+            val serializers = createInstancesOfClassesImplementing(transactionClassLoader, SerializationCustomSerializer::class.java)
             val whitelistedClasses = ServiceLoader.load(SerializationWhitelist::class.java, transactionClassLoader)
                     .flatMap(SerializationWhitelist::whitelist)
 

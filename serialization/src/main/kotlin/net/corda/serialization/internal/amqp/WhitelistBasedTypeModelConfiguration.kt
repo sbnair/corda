@@ -53,7 +53,6 @@ private val opaqueTypes = setOf(
         Symbol::class.java
 )
 
-@Suppress("unchecked_cast")
 private val DEFAULT_BASE_TYPES = BaseLocalTypes(
     collectionClass = Collection::class.java,
     enumSetClass = EnumSet::class.java,
@@ -61,7 +60,5 @@ private val DEFAULT_BASE_TYPES = BaseLocalTypes(
     mapClass = Map::class.java,
     stringClass = String::class.java,
     isEnum = Predicate { clazz -> clazz.isEnum },
-    enumConstants = Function { clazz ->
-        (clazz as Class<out Enum<*>>).enumConstants.map(Enum<*>::name)
-    }
+    enumConstants = Function { clazz -> clazz.enumConstants }
 )
