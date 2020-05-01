@@ -108,5 +108,4 @@ include 'serialization-deterministic'
 
 include 'tools:checkpoint-agent'
 include 'detekt-plugins'
-include 'tools:error-tool'
 

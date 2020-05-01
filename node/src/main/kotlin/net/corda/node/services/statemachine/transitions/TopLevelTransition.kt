@@ -32,14 +32,7 @@ class TopLevelTransition(
         override val startingState: StateMachineState,
         val event: Event
 ) : Transition {
-
-    @Suppress("ComplexMethod")
     override fun transition(): TransitionResult {
-
-        if (startingState.isKilled) {
-            return KilledFlowTransition(context, startingState, event).transition()
-        }
-
         return when (event) {
             is Event.DoRemainingWork -> DoRemainingWorkTransition(context, startingState).transition()
             is Event.DeliverSessionMessage -> DeliverSessionMessageTransition(context, startingState, event).transition()
@@ -55,7 +48,6 @@ class TopLevelTransition(
             is Event.AsyncOperationCompletion -> asyncOperationCompletionTransition(event)
             is Event.AsyncOperationThrows -> asyncOperationThrowsTransition(event)
             is Event.RetryFlowFromSafePoint -> retryFlowFromSafePointTransition(startingState)
-            is Event.WakeUpFromSleep -> wakeUpFromSleepTransition()
         }
     }
 
@@ -304,12 +296,6 @@ class TopLevelTransition(
             actions.add(Action.RetryFlowFromSafePoint(startingState))
             actions.add(Action.CommitTransaction)
             FlowContinuation.Abort
-        }
-    }
-
-    private fun wakeUpFromSleepTransition(): TransitionResult {
-        return builder {
-            resumeFlowLogic(Unit)
         }
     }
 }

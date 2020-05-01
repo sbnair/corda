@@ -155,12 +155,16 @@ abstract class AbstractQueryCriteriaParser<Q : GenericQueryCriteria<Q,P>, in P: 
     }
 }
 
-class HibernateAttachmentQueryCriteriaParser<T,R>(override val criteriaBuilder: CriteriaBuilder,
-                                             private val criteriaQuery: CriteriaQuery<R>, val root: Root<T>) :
+class HibernateAttachmentQueryCriteriaParser(override val criteriaBuilder: CriteriaBuilder,
+                                             private val criteriaQuery: CriteriaQuery<NodeAttachmentService.DBAttachment>, val root: Root<NodeAttachmentService.DBAttachment>) :
         AbstractQueryCriteriaParser<AttachmentQueryCriteria, AttachmentsQueryCriteriaParser, AttachmentSort>(), AttachmentsQueryCriteriaParser {
 
     private companion object {
         private val log = contextLogger()
+    }
+
+    init {
+        criteriaQuery.select(root)
     }
 
     override fun parse(criteria: AttachmentQueryCriteria, sorting: AttachmentSort?): Collection<Predicate> {

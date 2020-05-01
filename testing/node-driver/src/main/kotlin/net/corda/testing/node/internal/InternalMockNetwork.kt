@@ -550,11 +550,7 @@ open class InternalMockNetwork(cordappPackages: List<String> = emptyList(),
 
         return allActiveFlows.any {
             val flowState = it.snapshot().checkpoint.flowState
-            flowState is FlowState.Started && when (flowState.flowIORequest) {
-                is FlowIORequest.ExecuteAsyncOperation -> true
-                is FlowIORequest.Sleep -> true
-                else -> false
-            }
+            flowState is FlowState.Started && flowState.flowIORequest is FlowIORequest.ExecuteAsyncOperation
         }
     }
 

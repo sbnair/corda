@@ -98,8 +98,7 @@ class SandboxSerializerFactoryFactory(
             localSerializerFactory = localSerializerFactory,
             classLoader = classLoader,
             mustPreserveDataWhenEvolving = context.preventDataLoss,
-            primitiveTypes = primitiveTypes,
-            baseTypes = localTypes
+            primitiveTypes = primitiveTypes
         )
 
         val remoteSerializerFactory = DefaultRemoteSerializerFactory(

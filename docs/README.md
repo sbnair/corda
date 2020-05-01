@@ -1,23 +1,41 @@
-# Docs
+# Corda Documentation Build
 
-## Released documentation
+This Readme describes how to build the Corda documentation for the current version. The output html files will be written to the `corda\docs\build\html` directory.
 
-All released Corda documentation has now been moved to a standalone public documentation repository where the doc source can be found:
+## Prerequisites / First time build
 
-[corda/corda-docs](https://github.com/corda/corda-docs)
+Before you begin, you need to: 
+1. Install Docker. 
+1. Ensure that Docker is running. 
+1. Select **Expose daemon on tcp://localhost:2375 without TLS** in the Docker Settings (which you can open from the **System Tray** by right-clicking the **Docker symbol** and then selecting **Settings**)
 
-See the [readme](https://github.com/corda/corda-docs/blob/master/README.md) and [usage docs](https://github.com/corda/corda-docs/tree/master/usage-docs) pages for instructions on how to use the new repo and build the docs locally.
+## Build process
+1. Open a cmd dialogue. 
+1. Navigate to the root location (this is the `\corda` directory)
+1. Run the documentation build (`gradlew makeDocs` or `./gradlew makeDocs`)
 
-You can contribute to the docs source as before via fork & PR. We now use `markdown` to write/edit (instead of `rst`) and `Hugo` to build (instead of `Sphinx`).
+**Windows users:** *If this task fails because Docker can't find make-docsite.sh, go to Settings > Shared Drives in the Docker system tray
+agent, make sure the relevant drive is shared, and click 'Reset credentials'.*
 
-The published documentation is available at https://docs.corda.net.
+# RST style guide
 
-## Documentation for future releases
+The Corda documentation is described using the ReStructured Text (RST) markup language. For details of the syntax, see [this](http://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html).  
 
-R3's technical writing team, R3 engineering, and other R3 teams use a separate, private docs repo for working on draft documentation content targeting future releases:
+# Version placeholders
 
-[corda/corda-docs-develop](https://github.com/corda/corda-docs-develop)
+We currently support the following placeholders; they get substituted with the correct value at build time:
 
-These docs are published as part of each quarterly release of Corda. At that point their doc source becomes available and open for contributions in the [public docs repo](https://github.com/corda/corda-docs).
+```groovy
+    "|corda_version|" 
+    "|corda_version_lower|" 
+    "|java_version|" 
+    "|kotlin_version|" 
+    "|gradle_plugins_version|" 
+    "|quasar_version|"
+```
 
-The new documentation process is described in the technical writing team's space on [R3's internal confluence wiki](https://r3-cev.atlassian.net/wiki/spaces/EN/pages/1701249087/Technical+Writing).
+If you put one of these in an rst file anywhere (including in a code tag), it will be substituted with the value from `constants.properties` 
+(which is in the root of the project) at build time. `corda_version_lower` returns the current Corda version in lowercase which is useful
+for case sensitive artifacts such as docker images.
+
+The code for this can be found near the top of the conf.py file in the `docs/source` directory.

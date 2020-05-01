@@ -115,13 +115,13 @@ internal data class LocalTypeInformationBuilder(val lookup: LocalTypeLookup,
             baseTypes.mapClass.isAssignableFrom(type) -> AMap(type, typeIdentifier, Unknown, Unknown)
             type === baseTypes.stringClass -> Atomic(type, typeIdentifier)
             type.kotlin.javaPrimitiveType != null -> Atomic(type, typeIdentifier)
-            baseTypes.isEnum.test(type) -> baseTypes.enumConstantNames.apply(type).let { enumConstantNames ->
+            baseTypes.isEnum.test(type) -> baseTypes.enumConstants.apply(type).let { enumConstants ->
                 AnEnum(
                     type,
                     typeIdentifier,
-                    enumConstantNames,
+                    enumConstants.map(Any::toString),
                     buildInterfaceInformation(type),
-                    getEnumTransforms(type, enumConstantNames)
+                    getEnumTransforms(type, enumConstants)
                 )
             }
             type.kotlinObjectInstance != null -> Singleton(
@@ -142,10 +142,10 @@ internal data class LocalTypeInformationBuilder(val lookup: LocalTypeLookup,
         }
     }
 
-    private fun getEnumTransforms(type: Class<*>, enumConstants: List<String>): EnumTransforms {
+    private fun getEnumTransforms(type: Class<*>, enumConstants: Array<out Any>): EnumTransforms {
         try {
-            val constants = enumConstants.asSequence().mapIndexed { index, constant -> constant to index }.toMap()
-            return EnumTransforms.build(TransformsAnnotationProcessor.getEnumTransformsSchema(type), constants)
+            val constants = enumConstants.asSequence().mapIndexed { index, constant -> constant.toString() to index }.toMap()
+            return EnumTransforms.build(TransformsAnnotationProcessor.getTransformsSchema(type), constants)
         } catch (e: InvalidEnumTransformsException) {
             throw NotSerializableDetailedException(type.name, e.message!!)
         }

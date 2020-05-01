@@ -4,14 +4,22 @@ import net.corda.core.serialization.SerializedBytes
 import net.corda.core.serialization.internal._contextSerializationEnv
 import net.corda.core.serialization.serialize
 import net.corda.serialization.djvm.SandboxType.KOTLIN
+import net.corda.serialization.internal.SectionId
 import net.corda.serialization.internal.amqp.CompositeType
 import net.corda.serialization.internal.amqp.DeserializationInput
+import net.corda.serialization.internal.amqp.Envelope
 import net.corda.serialization.internal.amqp.TypeNotation
+import net.corda.serialization.internal.amqp.alsoAsByteBuffer
+import net.corda.serialization.internal.amqp.amqpMagic
+import net.corda.serialization.internal.amqp.withDescribed
+import net.corda.serialization.internal.amqp.withList
+import org.apache.qpid.proton.codec.Data
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.fail
+import java.io.ByteArrayOutputStream
 import java.util.function.Function
 
 @ExtendWith(LocalSerialization::class)
@@ -29,8 +37,12 @@ class SafeDeserialisationTest : TestBase(KOTLIN) {
         val innocentData = innocent.serialize()
         val envelope = DeserializationInput.getEnvelope(innocentData, context.encodingWhitelist).apply {
             val innocentType = schema.types[0] as CompositeType
-            (schema.types as MutableList<TypeNotation>)[0] = innocentType.copy(
-                name = innocentType.name.replace("Innocent", "VeryEvil")
+            (schema.types as MutableList<TypeNotation>)[0] = CompositeType(
+                name = innocentType.name.replace("Innocent", "VeryEvil"),
+                label = innocentType.label,
+                provides = innocentType.provides,
+                descriptor = innocentType.descriptor,
+                fields = innocentType.fields
             )
         }
         val evilData = SerializedBytes<Any>(envelope.write())
@@ -53,6 +65,23 @@ class SafeDeserialisationTest : TestBase(KOTLIN) {
             assertThat(ex.cause)
                 .isExactlyInstanceOf(IllegalStateException::class.java)
                 .hasMessageContaining("Victory is mine!")
+        }
+    }
+
+    private fun Envelope.write(): ByteArray {
+        val data = Data.Factory.create()
+        data.withDescribed(Envelope.DESCRIPTOR_OBJECT) {
+            withList {
+                putObject(obj)
+                putObject(schema)
+                putObject(transformsSchema)
+            }
+        }
+        return ByteArrayOutputStream().use {
+            amqpMagic.writeTo(it)
+            SectionId.DATA_AND_STOP.writeTo(it)
+            it.alsoAsByteBuffer(data.encodedSize().toInt(), data::encode)
+            it.toByteArray()
         }
     }
 

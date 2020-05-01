@@ -2,7 +2,6 @@ package net.corda.nodeapi.internal.cryptoservice.bouncycastle
 
 import net.corda.core.crypto.Crypto
 import net.corda.core.crypto.SignatureScheme
-import net.corda.core.crypto.internal.cordaBouncyCastleProvider
 import net.corda.core.internal.div
 import net.corda.core.utilities.days
 import net.corda.nodeapi.internal.config.CertificateStoreSupplier
@@ -14,7 +13,6 @@ import net.corda.nodeapi.internal.cryptoservice.WrappedPrivateKey
 import net.corda.nodeapi.internal.cryptoservice.WrappingMode
 import net.corda.testing.core.ALICE_NAME
 import net.corda.coretesting.internal.stubs.CertificateStoreStubs
-import net.corda.nodeapi.internal.crypto.loadOrCreateKeyStore
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -25,10 +23,8 @@ import org.junit.rules.TemporaryFolder
 import java.io.FileOutputStream
 import java.nio.file.Path
 import java.security.*
-import java.security.spec.ECGenParameterSpec
 import java.time.Duration
 import java.util.*
-import javax.crypto.Cipher
 import javax.security.auth.x500.X500Principal
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -256,28 +252,5 @@ class BCCryptoServiceTests {
         val signature = cryptoService.sign(wrappingKeyAlias, wrappedPrivateKey, data)
 
         Crypto.doVerify(publicKey, signature, data)
-    }
-
-    @Test(timeout=300_000)
-    fun `cryptoService can sign with previously encoded version of wrapped key`() {
-        val cryptoService = BCCryptoService(ALICE_NAME.x500Principal, signingCertificateStore, wrappingKeyStorePath)
-
-        val wrappingKeyAlias = UUID.randomUUID().toString()
-        cryptoService.createWrappingKey(wrappingKeyAlias)
-
-        val wrappingKeyStore = loadOrCreateKeyStore(wrappingKeyStorePath, cryptoService.certificateStore.password, "PKCS12")
-        val wrappingKey = wrappingKeyStore.getKey(wrappingKeyAlias, cryptoService.certificateStore.entryPassword.toCharArray())
-        val cipher = Cipher.getInstance("AES", cordaBouncyCastleProvider)
-        cipher.init(Cipher.WRAP_MODE, wrappingKey)
-
-        val keyPairGenerator = KeyPairGenerator.getInstance("EC", cordaBouncyCastleProvider)
-        keyPairGenerator.initialize(ECGenParameterSpec("secp256r1"))
-        val keyPair = keyPairGenerator.generateKeyPair()
-        val privateKeyMaterialWrapped = cipher.wrap(keyPair.private)
-        val wrappedPrivateKey = WrappedPrivateKey(privateKeyMaterialWrapped, Crypto.ECDSA_SECP256R1_SHA256, encodingVersion = null)
-
-        val data = "data".toByteArray()
-        val signature = cryptoService.sign(wrappingKeyAlias, wrappedPrivateKey, data)
-        Crypto.doVerify(keyPair.public, signature, data)
     }
 }
