@@ -8,7 +8,6 @@ import net.corda.core.context.InvocationContext
 import net.corda.core.flows.*
 import net.corda.core.identity.Party
 import net.corda.core.node.ServiceHub
-import net.corda.core.serialization.SerializedBytes
 import org.slf4j.Logger
 
 /** This is an internal interface that is implemented by code in the node module. You should look at [FlowLogic]. */
@@ -17,8 +16,6 @@ import org.slf4j.Logger
 interface FlowStateMachine<FLOWRETURN> {
     @Suspendable
     fun <SUSPENDRETURN : Any> suspend(ioRequest: FlowIORequest<SUSPENDRETURN>, maySkipCheckpoint: Boolean): SUSPENDRETURN
-
-    fun serialize(payloads: Map<FlowSession, Any>): Map<FlowSession, SerializedBytes<Any>>
 
     @Suspendable
     fun initiateFlow(destination: Destination, wellKnownParty: Party): FlowSession
@@ -47,5 +44,4 @@ interface FlowStateMachine<FLOWRETURN> {
     val ourIdentity: Party
     val ourSenderUUID: String?
     val creationTime: Long
-    val isKilled: Boolean
 }

@@ -401,7 +401,8 @@ class ContractVerifier(private val transactionClassLoader: ClassLoader) : Functi
 
     override fun apply(ltx: LedgerTransaction) {
         val contractClassNames = (ltx.inputs.map(StateAndRef<ContractState>::state) + ltx.outputs)
-            .mapTo(LinkedHashSet(), TransactionState<*>::contract)
+            .map(TransactionState<*>::contract)
+            .toSet()
 
         contractClassNames.associateBy(
             { it }, { createContractClass(ltx.id, it) }
@@ -409,7 +410,7 @@ class ContractVerifier(private val transactionClassLoader: ClassLoader) : Functi
             try {
                 /**
                  * This function must execute with the DJVM's sandbox, which does not
-                 * permit user code to invoke [java.lang.Class.getDeclaredConstructor].
+                 * permit user code to access [java.lang.reflect.Constructor] objects.
                  *
                  * [Class.newInstance] is deprecated as of Java 9.
                  */

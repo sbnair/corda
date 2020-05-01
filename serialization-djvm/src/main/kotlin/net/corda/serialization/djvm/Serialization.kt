@@ -12,7 +12,6 @@ import net.corda.djvm.rewiring.createSandboxPredicate
 import net.corda.djvm.rewiring.SandboxClassLoader
 import net.corda.serialization.djvm.deserializers.CheckEnum
 import net.corda.serialization.djvm.deserializers.DescribeEnum
-import net.corda.serialization.djvm.deserializers.GetEnumNames
 import net.corda.serialization.djvm.serializers.PrimitiveSerializer
 import net.corda.serialization.internal.GlobalTransientClassWhiteList
 import net.corda.serialization.internal.SerializationContextImpl
@@ -62,9 +61,6 @@ fun createSandboxSerializationEnv(
     val isEnumPredicate = predicateFactory.apply(CheckEnum::class.java) as Predicate<Class<*>>
     @Suppress("unchecked_cast")
     val enumConstants = taskFactory.apply(DescribeEnum::class.java) as Function<Class<*>, Array<out Any>>
-    @Suppress("unchecked_cast")
-    val enumConstantNames = enumConstants.andThen(taskFactory.apply(GetEnumNames::class.java))
-        .andThen { (it as Array<out Any>).map(Any::toString) } as Function<Class<*>, List<String>>
 
     val sandboxLocalTypes = BaseLocalTypes(
         collectionClass = classLoader.toSandboxClass(Collection::class.java),
@@ -73,8 +69,7 @@ fun createSandboxSerializationEnv(
         mapClass = classLoader.toSandboxClass(Map::class.java),
         stringClass = classLoader.toSandboxClass(String::class.java),
         isEnum = isEnumPredicate,
-        enumConstants = enumConstants,
-        enumConstantNames = enumConstantNames
+        enumConstants = enumConstants
     )
     val schemeBuilder = SandboxSerializationSchemeBuilder(
         classLoader = classLoader,

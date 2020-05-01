@@ -2,10 +2,6 @@ package net.corda.serialization.djvm
 
 import net.corda.core.serialization.ConstructorForDeserialization
 import net.corda.core.serialization.CordaSerializable
-import net.corda.core.serialization.CordaSerializationTransformEnumDefault
-import net.corda.core.serialization.CordaSerializationTransformEnumDefaults
-import net.corda.core.serialization.CordaSerializationTransformRename
-import net.corda.core.serialization.CordaSerializationTransformRenames
 import net.corda.core.serialization.DeprecatedConstructorForDeserialization
 import net.corda.djvm.SandboxConfiguration
 import net.corda.djvm.SandboxRuntimeContext
@@ -55,10 +51,6 @@ abstract class TestBase(type: SandboxType) {
                 whitelist = MINIMAL,
                 visibleAnnotations = setOf(
                     CordaSerializable::class.java,
-                    CordaSerializationTransformEnumDefault::class.java,
-                    CordaSerializationTransformEnumDefaults::class.java,
-                    CordaSerializationTransformRename::class.java,
-                    CordaSerializationTransformRenames::class.java,
                     ConstructorForDeserialization::class.java,
                     DeprecatedConstructorForDeserialization::class.java
                 ),
@@ -87,23 +79,37 @@ abstract class TestBase(type: SandboxType) {
     }
 
     fun sandbox(action: Consumer<SandboxRuntimeContext>) {
-        sandbox(WARNING, emptySet(), action)
+        sandbox(WARNING, emptySet(), emptySet(), action)
     }
 
     inline fun sandbox(visibleAnnotations: Set<Class<out Annotation>>, crossinline action: SandboxRuntimeContext.() -> Unit) {
         sandbox(visibleAnnotations, Consumer { ctx -> action(ctx) })
     }
 
+    fun sandbox(visibleAnnotations: Set<Class<out Annotation>>, action: Consumer<SandboxRuntimeContext>) {
+        sandbox(WARNING, visibleAnnotations, emptySet(), action)
+    }
+
+    inline fun sandbox(
+        visibleAnnotations: Set<Class<out Annotation>>,
+        sandboxOnlyAnnotations: Set<String>,
+        crossinline action: SandboxRuntimeContext.() -> Unit
+    ) {
+        sandbox(visibleAnnotations, sandboxOnlyAnnotations, Consumer { ctx -> action(ctx) })
+    }
+
     fun sandbox(
         visibleAnnotations: Set<Class<out Annotation>>,
+        sandboxOnlyAnnotations: Set<String>,
         action: Consumer<SandboxRuntimeContext>
     ) {
-        sandbox(WARNING, visibleAnnotations, action)
+        sandbox(WARNING, visibleAnnotations, sandboxOnlyAnnotations, action)
     }
 
     fun sandbox(
         minimumSeverityLevel: Severity,
         visibleAnnotations: Set<Class<out Annotation>>,
+        sandboxOnlyAnnotations: Set<String>,
         action: Consumer<SandboxRuntimeContext>
     ) {
         var thrownException: Throwable? = null
@@ -111,6 +117,7 @@ abstract class TestBase(type: SandboxType) {
             UserPathSource(classPaths).use { userSource ->
                 SandboxRuntimeContext(parentConfiguration.createChild(userSource, Consumer {
                     it.setMinimumSeverityLevel(minimumSeverityLevel)
+                    it.setSandboxOnlyAnnotations(sandboxOnlyAnnotations)
                     it.setVisibleAnnotations(visibleAnnotations)
                 })).use(action)
             }

@@ -136,6 +136,5 @@ class BaseLocalTypes(
     val mapClass: Class<*>,
     val stringClass: Class<*>,
     val isEnum: Predicate<Class<*>>,
-    val enumConstants: Function<Class<*>, Array<out Any>>,
-    val enumConstantNames: Function<Class<*>, List<String>>
+    val enumConstants: Function<Class<*>, Array<out Any>>
 )

@@ -20,6 +20,15 @@ class HospitalisingInterceptor(
         private val flowHospital: StaffedFlowHospital,
         private val delegate: TransitionExecutor
 ) : TransitionExecutor {
+    override fun forceRemoveFlow(id: StateMachineRunId) {
+        removeFlow(id)
+        delegate.forceRemoveFlow(id)
+    }
+
+    private fun removeFlow(id: StateMachineRunId) {
+        flowHospital.leave(id)
+        flowHospital.removeMedicalHistory(id)
+    }
 
     @Suspendable
     override fun executeTransition(
@@ -46,10 +55,5 @@ class HospitalisingInterceptor(
             removeFlow(fiber.id)
         }
         return Pair(continuation, nextState)
-    }
-
-    private fun removeFlow(id: StateMachineRunId) {
-        flowHospital.leave(id)
-        flowHospital.removeMedicalHistory(id)
     }
 }
